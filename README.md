@@ -1,6 +1,6 @@
-# EACHare – EP Parte 1 (ACH2147)
+# EACHare – EP Parte 2 (ACH2147)
 
-Este projeto implementa a Parte 1 do sistema distribuído EACHare, um sistema peer-to-peer (P2P) simples, conforme o enunciado da disciplina **ACH2147 – Desenvolvimento de Sistemas de Informação Distribuídos**.
+Este projeto implementa a Parte 2 do sistema distribuído EACHare, um sistema peer-to-peer (P2P) simples, conforme o enunciado da disciplina **ACH2147 – Desenvolvimento de Sistemas de Informação Distribuídos**.
 
 ## Estrutura esperada do projeto
 
@@ -17,7 +17,6 @@ eachare/
 ├── vizinhos_9001.txt
 ├── vizinhos_9002.txt
 ├── vizinhos_9003.txt
-<<<<<<< HEAD
 ├── compartilhados_peer1/
 │   ├── arquivo.txt    
 │   ├── arquivo_teste.txt 
@@ -30,12 +29,6 @@ eachare/
 │   ├── 3.txt    
 │   ├── arquivo_teste3.txt 
 │   └── teste3.txt
-=======
-├── compartilhados/
-│   ├── arquivo.txt    
-│   ├── arquivo_teste.txt 
-│   └── teste.txt
->>>>>>> bb6761be13c15cc9ef9b7fdb2e8e2eac7253da15
 ├── __pycache__/
 ```
 
