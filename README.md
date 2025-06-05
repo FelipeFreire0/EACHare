@@ -1,6 +1,6 @@
-# EACHare – EP Parte 2 (ACH2147)
+# EACHare – EP Parte 1 (ACH2147)
 
-Este projeto implementa a Parte 2 do sistema distribuído EACHare, um sistema peer-to-peer (P2P) simples, conforme o enunciado da disciplina **ACH2147 – Desenvolvimento de Sistemas de Informação Distribuídos**.
+Este projeto implementa a Parte 1 do sistema distribuído EACHare, um sistema peer-to-peer (P2P) simples, conforme o enunciado da disciplina **ACH2147 – Desenvolvimento de Sistemas de Informação Distribuídos**.
 
 ## Estrutura esperada do projeto
 
