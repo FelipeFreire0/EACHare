@@ -46,11 +46,7 @@ python main.py <endereço>:<porta> <arquivo_de_vizinhos> <diretório_compartilha
 ### Exemplo:
 
 ```
-<<<<<<< HEAD
 python main.py 127.0.0.1:9001 vizinhos_9001.txt compartilhados_peer1/
-=======
-python main.py 127.0.0.1:9001 vizinhos_9001.txt compartilhados/
->>>>>>> bb6761be13c15cc9ef9b7fdb2e8e2eac7253da15
 ```
 
 ## Testar com múltiplos peers
@@ -59,7 +55,6 @@ Abra 3 terminais e execute:
 
 ```bash
 # Terminal 1
-<<<<<<< HEAD
 python main.py 127.0.0.1:9001 vizinhos_9001.txt compartilhados_peer1/
 
 # Terminal 2
@@ -67,15 +62,6 @@ python main.py 127.0.0.1:9002 vizinhos_9002.txt compartilhados_peer2/
 
 # Terminal 3
 python main.py 127.0.0.1:9003 vizinhos_9003.txt compartilhados_peer3/
-=======
-python main.py 127.0.0.1:9001 vizinhos_9001.txt compartilhados/
-
-# Terminal 2
-python main.py 127.0.0.1:9002 vizinhos_9002.txt compartilhados/
-
-# Terminal 3
-python main.py 127.0.0.1:9003 vizinhos_9003.txt compartilhados/
->>>>>>> bb6761be13c15cc9ef9b7fdb2e8e2eac7253da15
 ```
 
 ### Exemplo de `vizinhos_9001.txt`
@@ -92,19 +78,12 @@ Escolha um comando:
 [1] Listar peers
 [2] Obter peers
 [3] Listar arquivos locais
-<<<<<<< HEAD
 [4] Buscar arquivos
-=======
->>>>>>> bb6761be13c15cc9ef9b7fdb2e8e2eac7253da15
 [9] Sair
 ```
 
 - `[1]`: Exibe a lista de peers e envia `HELLO`
 - `[2]`: Envia `GET_PEERS` e atualiza a lista de peers
 - `[3]`: Lista arquivos do diretório compartilhado
-<<<<<<< HEAD
 - `[4]`: Busca arquivos do diretório compartilhado para download
 - `[9]`: Envia `BYE` para peers ONLINE e encerra o programa
-=======
-- `[9]`: Envia `BYE` para peers ONLINE e encerra o programa
->>>>>>> bb6761be13c15cc9ef9b7fdb2e8e2eac7253da15
