@@ -3,6 +3,7 @@ import os
 import threading
 from mensagem import Mensagem
 from relogio import Relogio
+import base64
 
 # Classe que representa um peer ativo na rede P2P
 # Gerencia conexões, envio e recebimento de mensagens, relógio e lista de vizinhos
@@ -63,84 +64,85 @@ class Peer:
             print(f"Mensagem recebida: \"{mensagem_str}\"")
 
             mensagem = Mensagem.decodificar(mensagem_str)
+            # Atualiza relógio local conforme Lamport
             self.relogio.ao_receber(mensagem.clock)
-            
+
             origem = mensagem.origem
-            
-            # Update clock value for sender if message clock is greater
             novo_status = "OFFLINE" if mensagem.tipo == "BYE" else "ONLINE"
-            
+
+            # Atualiza status sempre, relógio só se clock recebido for maior
             if origem not in self.peers_conhecidos:
                 self.peers_conhecidos[origem] = {"status": novo_status, "clock": mensagem.clock}
                 print(f"Adicionando novo peer {origem} status {novo_status}")
             else:
-                # Always update status for direct messages
                 info_peer = self.peers_conhecidos[origem]
+                # Atualiza relógio apenas se clock recebido for maior
                 if mensagem.clock > info_peer["clock"]:
                     info_peer["clock"] = mensagem.clock
+                # Atualiza status sempre para mensagem direta
                 info_peer["status"] = novo_status
                 print(f"Atualizando peer {origem} status {novo_status}")
 
-            # Handle specific message types
+            # GET_PEERS: responde com lista de peers conhecidos
             if mensagem.tipo == "GET_PEERS":
-                # Send list of known peers
                 lista_peers = []
                 for p, info in self.peers_conhecidos.items():
                     if p != origem:
                         lista_peers.append(f"{p}:{info['status']}:{info['clock']}")
-
                 total = len(lista_peers)
                 clock = self.relogio.antes_de_enviar()
                 resposta = Mensagem(f"{self.endereco}:{self.porta}", clock, "PEER_LIST", [str(total)] + lista_peers)
                 conn.sendall(resposta.codificar().encode())
-                
-            # Handle LS message - list shared files
+
+            # LS: responde com lista de arquivos compartilhados
             elif mensagem.tipo == "LS":
-                # Get list of files in shared directory
-                arquivos = os.listdir(self.diretorio)
-                lista_arquivos = []
-                
-                for nome in arquivos:
-                    file_path = os.path.join(self.diretorio, nome)
-                    if os.path.isfile(file_path):
-                        tamanho = os.path.getsize(file_path)
-                        lista_arquivos.append(f"{nome}:{tamanho}")
-                
-                total = len(lista_arquivos)
-                clock = self.relogio.antes_de_enviar()
-                resposta = Mensagem(f"{self.endereco}:{self.porta}", clock, "LS_LIST", [str(total)] + lista_arquivos)
-                conn.sendall(resposta.codificar().encode())
-                
-            # Handle DL message - send file
+                try:
+                    arquivos = os.listdir(self.diretorio)
+                    argumentos = [str(len(arquivos))]
+                    for nome in arquivos:
+                        caminho = os.path.join(self.diretorio, nome)
+                        tamanho = os.path.getsize(caminho)
+                        argumentos.append(f"{nome}:{tamanho}")
+                    clock = self.relogio.antes_de_enviar()
+                    resposta = Mensagem(f"{self.endereco}:{self.porta}", clock, "LS_LIST", argumentos)
+                    conn.sendall(resposta.codificar().encode())
+                except Exception as e:
+                    print(f"[ERRO] Falha ao listar arquivos: {e}")
+
+            # DL: faz o download de um arquivo solicitado
             elif mensagem.tipo == "DL":
-                if len(mensagem.argumentos) >= 3:
-                    arquivo_nome = mensagem.argumentos[0]
-                    param1 = mensagem.argumentos[1]
-                    param2 = mensagem.argumentos[2]
-                    
-                    file_path = os.path.join(self.diretorio, arquivo_nome)
-                    
-                    # Check if file exists
-                    if os.path.isfile(file_path):
-                        # Read file in binary mode
-                        import base64
-                        with open(file_path, 'rb') as f:
-                            conteudo = f.read()
-                        
-                        # Encode content to base64
-                        conteudo_base64 = base64.b64encode(conteudo).decode('utf-8')
-                        
-                        # Send file
-                        clock = self.relogio.antes_de_enviar()
-                        resposta = Mensagem(f"{self.endereco}:{self.porta}", clock, "FILE", 
-                                           [arquivo_nome, param1, param2, conteudo_base64])
-                        conn.sendall(resposta.codificar().encode())
-                    else:
-                        # File not found
-                        clock = self.relogio.antes_de_enviar()
-                        resposta = Mensagem(f"{self.endereco}:{self.porta}", clock, "ERROR", ["FILE_NOT_FOUND"])
-                        conn.sendall(resposta.codificar().encode())
-        
+                nome_arquivo = mensagem.argumentos[0]
+                chunk_size = int(mensagem.argumentos[1])
+                idx_chunk = int(mensagem.argumentos[2])
+                caminho_arquivo = os.path.join(self.diretorio, nome_arquivo)
+
+                # Verifica se o arquivo existe e é legível
+                if not os.path.isfile(caminho_arquivo) or not os.access(caminho_arquivo, os.R_OK):
+                    print(f"[ERRO] Arquivo '{caminho_arquivo}' não encontrado ou não é legível.")
+                    # Envia uma resposta de erro
+                    clock = self.relogio.antes_de_enviar()
+                    resposta = Mensagem(f"{self.endereco}:{self.porta}", clock, "FILE", [nome_arquivo, "0", "ERRO", ""])
+                    conn.sendall(resposta.codificar().encode())
+                    return
+                try:
+                    with open(caminho_arquivo, "rb") as f:
+                        f.seek(idx_chunk * chunk_size)
+                        chunk_bytes = f.read(chunk_size)
+
+                    chunk_b64 = base64.b64encode(chunk_bytes).decode()
+                    clock = self.relogio.antes_de_enviar()
+
+                    resposta = Mensagem(
+                        f"{self.endereco}:{self.porta}", 
+                        clock, 
+                        "FILE", 
+                        [nome_arquivo, str(len(chunk_bytes)), str(idx_chunk), chunk_b64]
+                    )
+                    conn.sendall(resposta.codificar().encode())
+                    print(f"Chunk {idx_chunk} do arquivo '{nome_arquivo}' enviado para {mensagem.origem}.")
+            
+                except Exception as e:
+                   print(f"[ERRO] Falha ao enviar chunk do arquivo: {e}")
         except Exception as e:
             print(f"[ERRO] Erro ao tratar conexão: {e}")
         finally:
